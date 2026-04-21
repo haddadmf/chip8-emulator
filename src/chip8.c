@@ -4,6 +4,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const uint8_t chip8_fontset[80] = 
+{
+    0xF0,0x90,0x90,0x90,0xF0, // 0
+    0x20,0x60,0x20,0x20,0x70, // 1
+    0xF0,0x10,0xF0,0x80,0xF0, // 2
+    0xF0,0x10,0xF0,0x10,0xF0, // 3
+    0x90,0x90,0xF0,0x10,0x10, // 4
+    0xF0,0x80,0xF0,0x10,0xF0, // 5
+    0xF0,0x80,0xF0,0x90,0xF0, // 6
+    0xF0,0x10,0x20,0x40,0x40, // 7
+    0xF0,0x90,0xF0,0x90,0xF0, // 8
+    0xF0,0x90,0xF0,0x10,0xF0, // 9
+    0xF0,0x90,0xF0,0x90,0x90, // A
+    0xE0,0x90,0xE0,0x90,0xE0, // B
+    0xF0,0x80,0x80,0x80,0xF0, // C
+    0xE0,0x90,0x90,0x90,0xE0, // D
+    0xF0,0x80,0xF0,0x80,0xF0, // E
+    0xF0,0x80,0xF0,0x80,0x80  // F
+};
+
 // function to initialize the chip8 state
 void chip8_init(Chip8 *chip8)
 {
@@ -13,6 +33,9 @@ void chip8_init(Chip8 *chip8)
     // set the program counter to 0x200 because programs are loaded
     // starting at address 0x200
     chip8->pc = 0x200;
+
+    // load fontset into memory at 0x50
+    memcpy(&chip8->memory[0x50], chip8_fontset, sizeof(chip8_fontset));
 }
 
 
@@ -89,6 +112,9 @@ uint16_t chip8_fetch_opcode(Chip8 *chip8)
     // combine the high and low byte by shifting the high byte to make room for the low byte
     opcode = (high_byte << 8) | low_byte;
 
+    // move the program counter
+    chip8->pc += 2;
+
     // return the opcode
     return opcode;
 }
@@ -126,8 +152,6 @@ void chip8_execute_opcode(Chip8 *chip8, uint16_t opcode)
                 // lets the renderer know that the screen changed
                 chip8->draw_flag = true;
 
-                // move to the next instruction
-                chip8->pc += 2;
             }
             else
             {
@@ -147,8 +171,6 @@ void chip8_execute_opcode(Chip8 *chip8, uint16_t opcode)
             // set the desired register to an address
             chip8->V[x] = nn;
 
-            // move to the next instruction
-            chip8->pc += 2;
             break;
 
         // instructions starting with 7, aka ADD
@@ -156,8 +178,6 @@ void chip8_execute_opcode(Chip8 *chip8, uint16_t opcode)
             // add the address to a register
             chip8->V[x] += nn;
 
-            // move to the next instruction
-            chip8->pc += 2;
             break;
 
         // instructions starting with A, aka Index Register
@@ -165,8 +185,6 @@ void chip8_execute_opcode(Chip8 *chip8, uint16_t opcode)
             // set the index register to an address
             chip8->I = nnn;
 
-            // move to the next instruction
-            chip8->pc += 2;
             break;
 
         default:

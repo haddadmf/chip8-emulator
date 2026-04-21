@@ -33,6 +33,7 @@ typedef struct Chip8
 
     // tells the main loop to redraw
     bool draw_flag;
+
 } Chip8;
 
 // helper functions for the emulator
